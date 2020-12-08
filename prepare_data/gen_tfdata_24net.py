@@ -33,20 +33,20 @@ import tensorflow as tf
 import numpy as np
 import numpy.random as npr
 
-from tools import view_bar, bytes_feature
-
 sys.path.append('../')
+
+from tools import view_bar, bytes_feature
 
 
 def main():
 
     size = 24
     net = str(size)
-    with open('%s/pos_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/pos_%s.txt' % (net, size), 'r') as f:
         pos_hard = f.readlines()
-    with open('%s/neg_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/neg_%s.txt' % (net, size), 'r') as f:
         neg = f.readlines()
-    with open('%s/part_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/part_%s.txt' % (net, size), 'r') as f:
         part_hard = f.readlines()
     with open('native_'+'%s/pos_%s.txt' % (net, size), 'r') as f:
         pos = f.readlines()
@@ -59,7 +59,7 @@ def main():
     filename_cls = 'rnet_data_for_cls.tfrecords'
     print('Writing')
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_cls)
+    writer = tf.io.TFRecordWriter(filename_cls)
     for line in pos_hard:
         view_bar(cur_, sum_)
         cur_ += 1
@@ -81,7 +81,7 @@ def main():
 
     print('\n'+'positive random cropped')
     cur_ = 0
-    pos_keep = npr.choice(len(pos), size=100000, replace=False)
+    pos_keep = npr.choice(len(pos), size=1000, replace=False)
     sum_ = len(pos_keep)
     print('Writing')
     for i in pos_keep:
@@ -106,7 +106,7 @@ def main():
 
     print('\n'+'negative random cropped')
     cur_ = 0
-    neg_keep = npr.choice(len(neg), size=1300000, replace=False)
+    neg_keep = npr.choice(len(neg), size=13000, replace=False)
     sum_ = len(neg_keep)
     for i in neg_keep:
         line = neg[i]
@@ -137,8 +137,8 @@ def main():
     cur_ = 0
     filename_roi = 'rnet_data_for_bbx.tfrecords'
     print('Writing')
-    writer = tf.python_io.TFRecordWriter(filename_roi)
-    pos_keep = npr.choice(len(pos), size=100000, replace=False)
+    writer = tf.io.TFRecordWriter(filename_roi)
+    pos_keep = npr.choice(len(pos), size=1000, replace=False)
     sum_ = len(pos_keep)
     print('Writing')
     for i in pos_keep:
@@ -214,7 +214,7 @@ def main():
 
     print('\n'+'part random cropped')
     cur_ = 0
-    part_keep = npr.choice(len(part), size=100000, replace=False)
+    part_keep = npr.choice(len(part), size=1000, replace=False)
     sum_ = len(part_keep)
     for i in part_keep:
         view_bar(cur_, sum_)

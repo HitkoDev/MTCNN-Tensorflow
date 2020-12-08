@@ -40,7 +40,7 @@ def layer(op):
         else:
             layer_input = list(self.terminals)
         layer_output = op(self, layer_input, *args, **kwargs)
-        tf.add_to_collection('feature_map', layer_output)
+        tf.compat.v1.add_to_collection('feature_map', layer_output)
         self.layers[name] = layer_output
         self.feed(layer_output)
         return self
@@ -85,10 +85,10 @@ class NetWork(object):
 
         data_dict = np.load(data_path, encoding='latin1').item()
         for op_name in data_dict:
-            with tf.variable_scope(prefix + op_name, reuse=True):
+            with tf.compat.v1.variable_scope(prefix + op_name, reuse=True):
                 for param_name, data in data_dict[op_name].items():
                     try:
-                        var = tf.get_variable(param_name)
+                        var = tf.compat.v1.get_variable(param_name)
                         session.run(var.assign(data))
                     except ValueError:
                         if not ignore_missing:
@@ -127,7 +127,7 @@ class NetWork(object):
 
     def make_var(self, name, shape):
 
-        return tf.get_variable(
+        return tf.compat.v1.get_variable(
             name,
             shape,
             trainable=self.trainable,
@@ -150,7 +150,7 @@ class NetWork(object):
 
         def convolve(i, k): return tf.nn.conv2d(
             i, k, [1, s_h, s_w, 1], padding=padding)
-        with tf.variable_scope(name) as scope:
+        with tf.compat.v1.variable_scope(name) as scope:
             kernel = self.make_var(
                 'weights', shape=[
                     k_h, k_w, c_i / group, c_o])
@@ -175,7 +175,7 @@ class NetWork(object):
     @layer
     def prelu(self, inp, name):
 
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
             i = int(inp.get_shape()[-1])
             alpha = self.make_var('alpha', shape=(i,))
             return tf.nn.relu(inp) + tf.multiply(alpha, -tf.nn.relu(-inp))
@@ -185,7 +185,7 @@ class NetWork(object):
                  padding='SAME'):
 
         self.validate_padding(padding)
-        return tf.nn.max_pool(input,
+        return tf.nn.max_pool2d(input,
                               ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1],
                               padding=padding,
@@ -194,7 +194,7 @@ class NetWork(object):
     @layer
     def fc(self, inp, num_out, name, task=None, relu=True, wd=None):
 
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
             input_shape = inp.get_shape()
             if input_shape.ndims == 4:
                 dim = 1
@@ -214,7 +214,7 @@ class NetWork(object):
     @layer
     def softmax(self, target, name=None):
 
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
             return tf.nn.softmax(target, name=name)
 
 
@@ -222,7 +222,7 @@ class PNet(NetWork):
 
     def setup(self, task='data', reuse=False):
 
-        with tf.variable_scope('pnet', reuse=reuse):
+        with tf.compat.v1.variable_scope('pnet', reuse=reuse):
             (
                 self.feed(task) .conv(
                     3,
@@ -288,7 +288,7 @@ class RNet(NetWork):
 
     def setup(self, task='data', reuse=False):
 
-        with tf.variable_scope('rnet', reuse=reuse):
+        with tf.compat.v1.variable_scope('rnet', reuse=reuse):
             (
                 self.feed(task) .conv(
                     3,
@@ -366,7 +366,7 @@ class ONet(NetWork):
 
     def setup(self, task='data', reuse=False):
 
-        with tf.variable_scope('onet', reuse=reuse):
+        with tf.compat.v1.variable_scope('onet', reuse=reuse):
             (
                 self.feed(task) .conv(
                     3,
@@ -528,8 +528,8 @@ def train_net(Net, training_data, base_lr, loss_weight,
         images.append(image)
         labels.append(label)
     while len(images) is not 3:
-        images.append(tf.placeholder(tf.float32, [None, shape, shape, 3]))
-        labels.append(tf.placeholder(tf.float32))
+        images.append(tf.compat.v1.placeholder(tf.float32, [None, shape, shape, 3]))
+        labels.append(tf.compat.v1.placeholder(tf.float32))
     net = Net((('cls', images[0]), ('bbx', images[1]), ('pts', images[2])),
               weight_decay_coeff=weight_decay)
 
@@ -580,7 +580,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
     train_pts = tf.train.AdamOptimizer(learning_rate=base_lr) \
                         .minimize(losses_pts, global_step=global_step_pts)
 
-    init_op = tf.group(tf.global_variables_initializer(),
+    init_op = tf.group(tf.compat.v1.global_variables_initializer(),
                        tf.local_variables_initializer())
 
     config = tf.ConfigProto()
@@ -595,11 +595,11 @@ def train_net(Net, training_data, base_lr, loss_weight,
 
     with tf.Session(config=config) as sess:
         sess.run(init_op)
-        saver = tf.train.Saver(max_to_keep=200000)
+        saver = tf.compat.v1.train.Saver(max_to_keep=200000)
         if load_model:
             saver.restore(sess, load_filename)
-        else:
-            net.load(load_filename, sess, prefix)
+        #else:
+        #    net.load(load_filename, sess, prefix)
         if save_model:
             save_dir = os.path.split(save_filename)[0]
             if not os.path.exists(save_dir):

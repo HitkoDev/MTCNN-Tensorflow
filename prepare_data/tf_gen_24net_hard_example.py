@@ -30,18 +30,18 @@ import tensorflow as tf
 import cv2
 import numpy as np
 
+sys.path.append('../')
+
 from tools import detect_face_24net, IoU, view_bar
 from src.mtcnn import PNet, RNet
-
-sys.path.append('../')
 
 
 def main(args):
 
     image_size = 48
-    save_dir = str(image_size)
-    anno_file = 'wider_face_train.txt'
-    im_dir = 'WIDER_train/images/'
+    save_dir = 'hard_' + str(image_size)
+    anno_file = 'AWE_train.txt'
+    im_dir = 'AWE_train/'
     neg_save_dir = save_dir+'/negative'
     pos_save_dir = save_dir+'/positive'
     part_save_dir = save_dir+'/part'
@@ -77,16 +77,16 @@ def main(args):
             config.gpu_options.per_process_gpu_memory_fraction = 0.8
             config.gpu_options.allow_growth = True
             with tf.Session(config=config) as sess:
-                image_pnet = tf.placeholder(tf.float32, [None, None, None, 3])
+                image_pnet = tf.compat.v1.placeholder(tf.float32, [None, None, None, 3])
                 pnet = PNet({'data': image_pnet}, mode='test')
                 out_tensor_pnet = pnet.get_all_output()
-                image_rnet = tf.placeholder(tf.float32, [None, 24, 24, 3])
+                image_rnet = tf.compat.v1.placeholder(tf.float32, [None, 24, 24, 3])
                 rnet = RNet({'data': image_rnet}, mode='test')
                 out_tensor_rnet = rnet.get_all_output()
 
-                saver_pnet = tf.train.Saver([v for v in tf.global_variables()
+                saver_pnet = tf.compat.v1.train.Saver([v for v in tf.global_variables()
                                              if v.name[0:4] == 'pnet'])
-                saver_rnet = tf.train.Saver([v for v in tf.global_variables()
+                saver_rnet = tf.compat.v1.train.Saver([v for v in tf.global_variables()
                                              if v.name[0:4] == 'rnet'])
                 saver_pnet.restore(sess, model_file_pnet)
                 saver_rnet.restore(sess, model_file_rnet)
@@ -101,7 +101,7 @@ def main(args):
                     annotation = annotation.strip().split(' ')
                     bbox = list(map(float, annotation[1:]))
                     gts = np.array(bbox, dtype=np.float32).reshape(-1, 4)
-                    img_path = im_dir + annotation[0] + '.jpg'
+                    img_path = im_dir + annotation[0]
                     img = cv2.imread(img_path)
                     rectangles = detect_face_24net(img, minsize,
                                                    pnet_fun, rnet_fun,
@@ -178,10 +178,10 @@ def parse_arguments(argv):
 
     parser.add_argument('--pnet_model', type=str,
                         help='The path of pnet model to generate hard example',
-                        default='../save_model/seperate_net/pnet/pnet-3000000')
+                        default='../save_model/separate/pnet/pnet-3000000')
     parser.add_argument('--rnet_model', type=str,
                         help='The path of rnet model to generate hard example',
-                        default='../save_model/seperate_net/rnet/rnet-3000000')
+                        default='../save_model/separate/rnet/rnet-3000000')
 
     return parser.parse_args(argv)
 

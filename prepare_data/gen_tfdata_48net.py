@@ -33,20 +33,20 @@ import tensorflow as tf
 import numpy as np
 import numpy.random as npr
 
-from tools import view_bar, bytes_feature
-
 sys.path.append('../')
+
+from tools import view_bar, bytes_feature
 
 
 def main():
 
     size = 48
     net = str(size)
-    with open('%s/pos_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/pos_%s.txt' % (net, size), 'r') as f:
         pos_hard = f.readlines()
-    with open('%s/neg_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/neg_%s.txt' % (net, size), 'r') as f:
         neg_hard = f.readlines()
-    with open('%s/part_%s.txt' % (net, size), 'r') as f:
+    with open('hard_%s/part_%s.txt' % (net, size), 'r') as f:
         part_hard = f.readlines()
     with open('native_'+'%s/pos_%s.txt' % (net, size), 'r') as f:
         pos = f.readlines()
@@ -61,7 +61,7 @@ def main():
     filename_cls = 'onet_data_for_cls.tfrecords'
     print('Writing')
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_cls)
+    writer = tf.io.TFRecordWriter(filename_cls)
     for line in pos_hard:
         view_bar(cur_, sum_)
         cur_ += 1
@@ -163,7 +163,7 @@ def main():
     print('Writing')
     sum_ = len(pos_keep)
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_roi)
+    writer = tf.io.TFRecordWriter(filename_roi)
     for i in pos_keep:
         view_bar(cur_, sum_)
         cur_ += 1

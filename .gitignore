@@ -1,0 +1,7 @@
+__pycache__
+prepare_data/AWEForSegmentation/**/*.png
+prepare_data/AWE_*/
+prepare_data/native_*/
+prepare_data/hard_*/
+*.tfrecords
+save_model/new_saver/

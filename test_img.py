@@ -41,26 +41,26 @@ def main(args):
             config = tf.ConfigProto(allow_soft_placement=True)
             with tf.Session(config=config) as sess:
                 if len(file_paths) == 3:
-                    image_pnet = tf.placeholder(
+                    image_pnet = tf.compat.v1.placeholder(
                         tf.float32, [None, None, None, 3])
                     pnet = PNet({'data': image_pnet}, mode='test')
                     out_tensor_pnet = pnet.get_all_output()
 
-                    image_rnet = tf.placeholder(tf.float32, [None, 24, 24, 3])
+                    image_rnet = tf.compat.v1.placeholder(tf.float32, [None, 24, 24, 3])
                     rnet = RNet({'data': image_rnet}, mode='test')
                     out_tensor_rnet = rnet.get_all_output()
 
-                    image_onet = tf.placeholder(tf.float32, [None, 48, 48, 3])
+                    image_onet = tf.compat.v1.placeholder(tf.float32, [None, 48, 48, 3])
                     onet = ONet({'data': image_onet}, mode='test')
                     out_tensor_onet = onet.get_all_output()
 
-                    saver_pnet = tf.train.Saver(
+                    saver_pnet = tf.compat.v1.train.Saver(
                                     [v for v in tf.global_variables()
                                      if v.name[0:5] == "pnet/"])
-                    saver_rnet = tf.train.Saver(
+                    saver_rnet = tf.compat.v1.train.Saver(
                                     [v for v in tf.global_variables()
                                      if v.name[0:5] == "rnet/"])
-                    saver_onet = tf.train.Saver(
+                    saver_onet = tf.compat.v1.train.Saver(
                                     [v for v in tf.global_variables()
                                      if v.name[0:5] == "onet/"])
 

@@ -30,18 +30,18 @@ import tensorflow as tf
 import cv2
 import numpy as np
 
+sys.path.append('../')
+
 from tools import detect_face_12net, IoU, view_bar
 from src.mtcnn import PNet
-
-sys.path.append('../')
 
 
 def main(args):
 
     image_size = 24
-    save_dir = str(image_size)
-    anno_file = 'wider_face_train.txt'
-    im_dir = 'WIDER_train/images/'
+    save_dir = 'hard_' + str(image_size)
+    anno_file = 'AWE_train.txt'
+    im_dir = 'AWE_train/'
 
     neg_save_dir = save_dir+'/negative'
     pos_save_dir = save_dir+'/positive'
@@ -76,12 +76,12 @@ def main(args):
             config = tf.ConfigProto(allow_soft_placement=True)
             config.gpu_options.per_process_gpu_memory_fraction = 0.5
             with tf.Session(config=config) as sess:
-                image = tf.placeholder(tf.float32, [None, None, None, 3])
+                image = tf.compat.v1.placeholder(tf.float32, [None, None, None, 3])
                 pnet = PNet({'data': image}, mode='test')
                 out_tensor = pnet.get_all_output()
-                init_op = tf.global_variables_initializer()
+                init_op = tf.compat.v1.global_variables_initializer()
                 sess.run(init_op)
-                saver = tf.train.Saver()
+                saver = tf.compat.v1.train.Saver()
                 saver.restore(sess, model_file)
 
                 def pnet_fun(img): return sess.run(
@@ -91,7 +91,7 @@ def main(args):
                     annotation = annotation.strip().split(' ')
                     bbox = list(map(float, annotation[1:]))
                     gts = np.array(bbox, dtype=np.float32).reshape(-1, 4)
-                    img_path = im_dir + annotation[0] + '.jpg'
+                    img_path = im_dir + annotation[0]
                     img = cv2.imread(img_path)
                     rectangles = detect_face_12net(img, minsize, pnet_fun,
                                                    threshold, factor)
@@ -111,51 +111,53 @@ def main(args):
 
                         Iou = IoU(box, gts)
                         cropped_im = img[y_top: y_bottom+1, x_left: x_right+1]
-                        resized_im = cv2.resize(cropped_im,
-                                                (image_size, image_size),
-                                                interpolation=cv2.INTER_LINEAR)
+                        try:
+                            resized_im = cv2.resize(cropped_im,
+                                                    (image_size, image_size),
+                                                    interpolation=cv2.INTER_LINEAR)
 
-                        # save negative images and write label
-                        if np.max(Iou) < 0.3:
-                            # Iou with all gts must below 0.3
-                            save_file = os.path.join(neg_save_dir,
-                                                     '%s.jpg' % n_idx)
-                            f2.write('%s/negative/%s' %
-                                     (save_dir, n_idx) + ' 0\n')
-                            cv2.imwrite(save_file, resized_im)
-                            n_idx += 1
-                        else:
-                            # find gt_box with the highest iou
-                            idx = np.argmax(Iou)
-                            assigned_gt = gts[idx]
-                            x1, y1, x2, y2 = assigned_gt
-
-                            # compute bbox reg label
-                            offset_x1 = (x1 - x_left) / float(crop_w)
-                            offset_y1 = (y1 - y_top) / float(crop_h)
-                            offset_x2 = (x2 - x_right) / float(crop_w)
-                            offset_y2 = (y2 - y_bottom) / float(crop_h)
-
-                            if np.max(Iou) >= 0.65:
-                                save_file = os.path.join(pos_save_dir,
-                                                         '%s.jpg' % p_idx)
-                                f1.write('%s/positive/%s' % (save_dir, p_idx) +
-                                         ' 1 %.2f %.2f %.2f %.2f\n' %
-                                         (offset_x1, offset_y1,
-                                          offset_x2, offset_y2))
+                            # save negative images and write label
+                            if np.max(Iou) < 0.3:
+                                # Iou with all gts must below 0.3
+                                save_file = os.path.join(neg_save_dir,
+                                                        '%s.jpg' % n_idx)
+                                f2.write('%s/negative/%s' %
+                                        (save_dir, n_idx) + ' 0\n')
                                 cv2.imwrite(save_file, resized_im)
-                                p_idx += 1
+                                n_idx += 1
+                            else:
+                                # find gt_box with the highest iou
+                                idx = np.argmax(Iou)
+                                assigned_gt = gts[idx]
+                                x1, y1, x2, y2 = assigned_gt
 
-                            elif np.max(Iou) >= 0.4:
-                                save_file = os.path.join(part_save_dir,
-                                                         '%s.jpg' % d_idx)
-                                f3.write('%s/part/%s' % (save_dir, d_idx) +
-                                         ' -1 %.2f %.2f %.2f %.2f\n' %
-                                         (offset_x1, offset_y1,
-                                          offset_x2, offset_y2))
-                                cv2.imwrite(save_file, resized_im)
-                                d_idx += 1
+                                # compute bbox reg label
+                                offset_x1 = (x1 - x_left) / float(crop_w)
+                                offset_y1 = (y1 - y_top) / float(crop_h)
+                                offset_x2 = (x2 - x_right) / float(crop_w)
+                                offset_y2 = (y2 - y_bottom) / float(crop_h)
 
+                                if np.max(Iou) >= 0.65:
+                                    save_file = os.path.join(pos_save_dir,
+                                                            '%s.jpg' % p_idx)
+                                    f1.write('%s/positive/%s' % (save_dir, p_idx) +
+                                            ' 1 %.2f %.2f %.2f %.2f\n' %
+                                            (offset_x1, offset_y1,
+                                            offset_x2, offset_y2))
+                                    cv2.imwrite(save_file, resized_im)
+                                    p_idx += 1
+
+                                elif np.max(Iou) >= 0.4:
+                                    save_file = os.path.join(part_save_dir,
+                                                            '%s.jpg' % d_idx)
+                                    f3.write('%s/part/%s' % (save_dir, d_idx) +
+                                            ' -1 %.2f %.2f %.2f %.2f\n' %
+                                            (offset_x1, offset_y1,
+                                            offset_x2, offset_y2))
+                                    cv2.imwrite(save_file, resized_im)
+                                    d_idx += 1
+                        except:
+                            print(box)
     f1.close()
     f2.close()
     f3.close()
@@ -167,7 +169,7 @@ def parse_arguments(argv):
 
     parser.add_argument('--pnet_model', type=str,
                         help='The path of pnet model to generate hard example',
-                        default='../save_model/seperate_net/pnet/pnet-3000000')
+                        default='../save_model/new_saver/pnet/pnet-13600')
 
     return parser.parse_args(argv)
 

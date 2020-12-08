@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 import tensorflow as tf
-from src.mtcnn import train_net, ONet
+from mtcnn import train_net, ONet
 
 
 def train_Onet(training_data, base_lr, loss_weight,

@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 import tensorflow as tf
-from src.mtcnn import train_net, PNet
+from mtcnn import train_net, PNet
 
 
 def train_Pnet(training_data, base_lr, loss_weight,

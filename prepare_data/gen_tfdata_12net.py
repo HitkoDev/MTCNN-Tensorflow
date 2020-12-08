@@ -30,9 +30,9 @@ import tensorflow as tf
 import numpy as np
 import numpy.random as npr
 
-from tools import view_bar, bytes_feature
-
 sys.path.append('../')
+
+from tools import view_bar, bytes_feature
 
 
 def main():
@@ -51,7 +51,7 @@ def main():
     filename_cls = 'pnet_data_for_cls.tfrecords'
     print('Writing')
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_cls)
+    writer = tf.io.TFRecordWriter(filename_cls)
     cur_ = 0
     sum_ = len(pos)
     for line in pos:
@@ -74,7 +74,7 @@ def main():
 
     print('\n'+'neg')
     cur_ = 0
-    neg_keep = npr.choice(len(neg), size=1000000, replace=False)
+    neg_keep = npr.choice(len(neg), size=10000, replace=False)
     sum_ = len(neg_keep)
     for i in neg_keep:
         line = neg[i]
@@ -106,7 +106,7 @@ def main():
     print('Writing')
     sum_ = len(pos)
     examples = []
-    writer = tf.python_io.TFRecordWriter(filename_roi)
+    writer = tf.io.TFRecordWriter(filename_roi)
     for line in pos:
         view_bar(cur_, sum_)
         cur_ += 1
@@ -129,7 +129,7 @@ def main():
 
     print('\n'+'part')
     cur_ = 0
-    part_keep = npr.choice(len(part), size=300000, replace=False)
+    part_keep = npr.choice(len(part), size=3000, replace=False)
     sum_ = len(part_keep)
     for i in part_keep:
         view_bar(cur_, sum_)
