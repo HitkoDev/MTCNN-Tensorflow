@@ -38,8 +38,8 @@ def main(args):
     file_paths = get_model_filenames(args.model_dir)
     with tf.device('/gpu:0'):
         with tf.Graph().as_default():
-            config = tf.ConfigProto(allow_soft_placement=True)
-            with tf.Session(config=config) as sess:
+            config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+            with tf.compat.v1.Session(config=config) as sess:
                 if len(file_paths) == 3:
                     image_pnet = tf.compat.v1.placeholder(
                         tf.float32, [None, None, None, 3])
@@ -55,13 +55,13 @@ def main(args):
                     out_tensor_onet = onet.get_all_output()
 
                     saver_pnet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.global_variables()
+                                    [v for v in tf.compat.v1.global_variables()
                                      if v.name[0:5] == "pnet/"])
                     saver_rnet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.global_variables()
+                                    [v for v in tf.compat.v1.global_variables()
                                      if v.name[0:5] == "rnet/"])
                     saver_onet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.global_variables()
+                                    [v for v in tf.compat.v1.global_variables()
                                      if v.name[0:5] == "onet/"])
 
                     saver_pnet.restore(sess, file_paths[0])
@@ -80,7 +80,7 @@ def main(args):
                         out_tensor_onet, feed_dict={image_onet: img})
 
                 else:
-                    saver = tf.train.import_meta_graph(file_paths[0])
+                    saver = tf.compat.v1.train.import_meta_graph(file_paths[0])
                     saver.restore(sess, file_paths[1])
 
                     def pnet_fun(img): return sess.run(

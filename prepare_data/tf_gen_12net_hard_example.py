@@ -73,9 +73,9 @@ def main(args):
         factor = 0.709
         model_file = args.pnet_model
         with tf.Graph().as_default():
-            config = tf.ConfigProto(allow_soft_placement=True)
+            config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
             config.gpu_options.per_process_gpu_memory_fraction = 0.5
-            with tf.Session(config=config) as sess:
+            with tf.compat.v1.Session(config=config) as sess:
                 image = tf.compat.v1.placeholder(tf.float32, [None, None, None, 3])
                 pnet = PNet({'data': image}, mode='test')
                 out_tensor = pnet.get_all_output()

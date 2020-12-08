@@ -73,10 +73,10 @@ def main(args):
         model_file_pnet = args.pnet_model
         model_file_rnet = args.rnet_model
         with tf.Graph().as_default():
-            config = tf.ConfigProto(allow_soft_placement=True)
+            config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
             config.gpu_options.per_process_gpu_memory_fraction = 0.8
             config.gpu_options.allow_growth = True
-            with tf.Session(config=config) as sess:
+            with tf.compat.v1.Session(config=config) as sess:
                 image_pnet = tf.compat.v1.placeholder(tf.float32, [None, None, None, 3])
                 pnet = PNet({'data': image_pnet}, mode='test')
                 out_tensor_pnet = pnet.get_all_output()
@@ -84,9 +84,9 @@ def main(args):
                 rnet = RNet({'data': image_rnet}, mode='test')
                 out_tensor_rnet = rnet.get_all_output()
 
-                saver_pnet = tf.compat.v1.train.Saver([v for v in tf.global_variables()
+                saver_pnet = tf.compat.v1.train.Saver([v for v in tf.compat.v1.global_variables()
                                              if v.name[0:4] == 'pnet'])
-                saver_rnet = tf.compat.v1.train.Saver([v for v in tf.global_variables()
+                saver_rnet = tf.compat.v1.train.Saver([v for v in tf.compat.v1.global_variables()
                                              if v.name[0:4] == 'rnet'])
                 saver_pnet.restore(sess, model_file_pnet)
                 saver_rnet.restore(sess, model_file_rnet)

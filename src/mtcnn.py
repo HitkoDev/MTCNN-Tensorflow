@@ -131,7 +131,7 @@ class NetWork(object):
             name,
             shape,
             trainable=self.trainable,
-            initializer=tf.truncated_normal_initializer(
+            initializer=tf.compat.v1.truncated_normal_initializer(
                 stddev=1e-4))
 
     def validate_padding(self, padding):
@@ -149,7 +149,7 @@ class NetWork(object):
         assert c_o % group == 0
 
         def convolve(i, k): return tf.nn.conv2d(
-            i, k, [1, s_h, s_w, 1], padding=padding)
+            input=i, filters=k, strides=[1, s_h, s_w, 1], padding=padding)
         with tf.compat.v1.variable_scope(name) as scope:
             kernel = self.make_var(
                 'weights', shape=[
@@ -208,7 +208,7 @@ class NetWork(object):
                 self.weight_decay[task] \
                     .append(tf.multiply(tf.nn.l2_loss(weights), wd))
             biases = self.make_var('biases', [num_out])
-            op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
+            op = tf.compat.v1.nn.relu_layer if relu else tf.compat.v1.nn.xw_plus_b
             return op(feed_in, weights, biases, name=name)
 
     @layer
@@ -455,21 +455,21 @@ class ONet(NetWork):
 
 def read_and_decode(filename_queue, label_type, shape):
 
-    reader = tf.TFRecordReader()
+    reader = tf.compat.v1.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
-    features = tf.parse_single_example(
-        serialized_example,
+    features = tf.io.parse_single_example(
+        serialized=serialized_example,
         features={
-            'image_raw': tf.FixedLenFeature([], tf.string),
-            'label_raw': tf.FixedLenFeature([], tf.string),
+            'image_raw': tf.io.FixedLenFeature([], tf.string),
+            'label_raw': tf.io.FixedLenFeature([], tf.string),
         })
-    image = tf.decode_raw(features['image_raw'], tf.uint8)
+    image = tf.io.decode_raw(features['image_raw'], tf.uint8)
     image = tf.cast(image, tf.float32)
 
     image = (image - 127.5) * (1. / 128.0)
     image.set_shape([shape * shape * 3])
     image = tf.reshape(image, [shape, shape, 3])
-    label = tf.decode_raw(features['label_raw'], tf.float32)
+    label = tf.io.decode_raw(features['label_raw'], tf.float32)
 
     if label_type == 'cls':
         image = tf.image.random_flip_left_right(image)
@@ -489,13 +489,13 @@ def inputs(filename, batch_size, num_epochs, label_type, shape):
         if not num_epochs:
             num_epochs = None
 
-        with tf.name_scope('input'):
-            filename_queue = tf.train.string_input_producer(
+        with tf.compat.v1.name_scope('input'):
+            filename_queue = tf.compat.v1.train.string_input_producer(
                 filename, num_epochs=num_epochs)
 
         image, label = read_and_decode(filename_queue, label_type, shape)
 
-        images, sparse_labels = tf.train.shuffle_batch(
+        images, sparse_labels = tf.compat.v1.train.shuffle_batch(
             [image, label], batch_size=batch_size, num_threads=2,
             capacity=1000 + 3 * batch_size,
             min_after_dequeue=1000)
@@ -534,12 +534,12 @@ def train_net(Net, training_data, base_lr, loss_weight,
               weight_decay_coeff=weight_decay)
 
     print('all trainable variables:')
-    all_vars = tf.get_collection(key=tf.GraphKeys.TRAINABLE_VARIABLES)
+    all_vars = tf.compat.v1.get_collection(key=tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES)
     for var in all_vars:
         print(var)
 
     print('all local variable:')
-    local_variables = tf.local_variables()
+    local_variables = tf.compat.v1.local_variables()
     for l_v in local_variables:
         print(l_v.name)
 
@@ -552,20 +552,20 @@ def train_net(Net, training_data, base_lr, loss_weight,
     # cls loss
     softmax_loss = loss_weight[0] * \
         tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=labels[0],
+        input_tensor=tf.nn.softmax_cross_entropy_with_logits(labels=tf.stop_gradient(labels[0]),
                                                 logits=cls_output))
     weight_losses_cls = net.get_weight_decay()['cls']
     losses_cls = softmax_loss + tf.add_n(weight_losses_cls)
 
     # bbx loss
     square_bbx_loss = loss_weight[1] * \
-        tf.reduce_mean(tf.squared_difference(bbx_output, labels[1]))
+        tf.reduce_mean(input_tensor=tf.math.squared_difference(bbx_output, labels[1]))
     weight_losses_bbx = net.get_weight_decay()['bbx']
     losses_bbx = square_bbx_loss + tf.add_n(weight_losses_bbx)
 
     # pts loss
     square_pts_loss = loss_weight[2] * \
-        tf.reduce_mean(tf.squared_difference(pts_output, labels[2]))
+        tf.reduce_mean(input_tensor=tf.math.squared_difference(pts_output, labels[2]))
     weight_losses_pts = net.get_weight_decay()['pts']
     losses_pts = square_pts_loss + tf.add_n(weight_losses_pts)
 
@@ -573,17 +573,17 @@ def train_net(Net, training_data, base_lr, loss_weight,
     global_step_bbx = tf.Variable(1, name='global_step_bbx', trainable=False)
     global_step_pts = tf.Variable(1, name='global_step_pts', trainable=False)
 
-    train_cls = tf.train.AdamOptimizer(learning_rate=base_lr) \
+    train_cls = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
                         .minimize(losses_cls, global_step=global_step_cls)
-    train_bbx = tf.train.AdamOptimizer(learning_rate=base_lr) \
+    train_bbx = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
                         .minimize(losses_bbx, global_step=global_step_bbx)
-    train_pts = tf.train.AdamOptimizer(learning_rate=base_lr) \
+    train_pts = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
                         .minimize(losses_pts, global_step=global_step_pts)
 
     init_op = tf.group(tf.compat.v1.global_variables_initializer(),
-                       tf.local_variables_initializer())
+                       tf.compat.v1.local_variables_initializer())
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.allow_soft_placement = True
     config.gpu_options.per_process_gpu_memory_fraction = gpu_memory_fraction
     config.gpu_options.allow_growth = True
@@ -593,7 +593,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
     loss_agg_pts = [0]
     step_value = [1, 1, 1]
 
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         sess.run(init_op)
         saver = tf.compat.v1.train.Saver(max_to_keep=200000)
         if load_model:
@@ -605,7 +605,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
         coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        threads = tf.compat.v1.train.start_queue_runners(sess=sess, coord=coord)
         try:
             while not coord.should_stop():
                 choic = np.random.randint(0, train_mode)
