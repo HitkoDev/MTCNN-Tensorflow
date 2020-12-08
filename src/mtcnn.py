@@ -153,7 +153,7 @@ class NetWork(object):
         with tf.compat.v1.variable_scope(name) as scope:
             kernel = self.make_var(
                 'weights', shape=[
-                    k_h, k_w, c_i / group, c_o])
+                    k_h, k_w, c_i // group, c_o])
             if group == 1:
                 output = convolve(inp, kernel)
             else:
@@ -186,10 +186,10 @@ class NetWork(object):
 
         self.validate_padding(padding)
         return tf.nn.max_pool2d(input,
-                              ksize=[1, k_h, k_w, 1],
-                              strides=[1, s_h, s_w, 1],
-                              padding=padding,
-                              name=name)
+                                ksize=[1, k_h, k_w, 1],
+                                strides=[1, s_h, s_w, 1],
+                                padding=padding,
+                                name=name)
 
     @layer
     def fc(self, inp, num_out, name, task=None, relu=True, wd=None):
@@ -202,7 +202,7 @@ class NetWork(object):
                     dim *= int(d)
                 feed_in = tf.reshape(inp, [-1, dim])
             else:
-                feed_in, dim = (inp, input_shape[-1].value)
+                feed_in, dim = (inp, input_shape[-1])
             weights = self.make_var('weights', shape=[dim, num_out])
             if (wd is not None) and (self.mode == 'train'):
                 self.weight_decay[task] \
@@ -508,6 +508,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
               batch_size=64, weight_decay=4e-3,
               load_model=False, load_filename=None,
               save_model=False, save_filename=None,
+              save_final=True,
               num_iter_to_save=10000,
               gpu_memory_fraction=1):
 
@@ -553,7 +554,7 @@ def train_net(Net, training_data, base_lr, loss_weight,
     softmax_loss = loss_weight[0] * \
         tf.reduce_mean(
         input_tensor=tf.nn.softmax_cross_entropy_with_logits(labels=tf.stop_gradient(labels[0]),
-                                                logits=cls_output))
+                                                             logits=cls_output))
     weight_losses_cls = net.get_weight_decay()['cls']
     losses_cls = softmax_loss + tf.add_n(weight_losses_cls)
 
@@ -574,11 +575,11 @@ def train_net(Net, training_data, base_lr, loss_weight,
     global_step_pts = tf.Variable(1, name='global_step_pts', trainable=False)
 
     train_cls = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
-                        .minimize(losses_cls, global_step=global_step_cls)
+        .minimize(losses_cls, global_step=global_step_cls)
     train_bbx = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
-                        .minimize(losses_bbx, global_step=global_step_bbx)
+        .minimize(losses_bbx, global_step=global_step_bbx)
     train_pts = tf.compat.v1.train.AdamOptimizer(learning_rate=base_lr) \
-                        .minimize(losses_pts, global_step=global_step_pts)
+        .minimize(losses_pts, global_step=global_step_pts)
 
     init_op = tf.group(tf.compat.v1.global_variables_initializer(),
                        tf.compat.v1.local_variables_initializer())
@@ -598,9 +599,9 @@ def train_net(Net, training_data, base_lr, loss_weight,
         saver = tf.compat.v1.train.Saver(max_to_keep=200000)
         if load_model:
             saver.restore(sess, load_filename)
-        #else:
+        # else:
         #    net.load(load_filename, sess, prefix)
-        if save_model:
+        if save_model or save_final:
             save_dir = os.path.split(save_filename)[0]
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
@@ -646,6 +647,9 @@ def train_net(Net, training_data, base_lr, loss_weight,
             print(
                 'Done training for %d epochs, %d steps.' %
                 (num_epochs[0], step_value[0]))
+
+            if save_final:
+                saver.save(sess, save_filename)
         finally:
             coord.request_stop()
 

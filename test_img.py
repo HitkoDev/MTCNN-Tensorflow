@@ -55,26 +55,26 @@ def main(args):
                     out_tensor_onet = onet.get_all_output()
 
                     saver_pnet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.compat.v1.global_variables()
-                                     if v.name[0:5] == "pnet/"])
+                        [v for v in tf.compat.v1.global_variables()
+                         if v.name[0:5] == "pnet/"])
                     saver_rnet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.compat.v1.global_variables()
-                                     if v.name[0:5] == "rnet/"])
+                        [v for v in tf.compat.v1.global_variables()
+                         if v.name[0:5] == "rnet/"])
                     saver_onet = tf.compat.v1.train.Saver(
-                                    [v for v in tf.compat.v1.global_variables()
-                                     if v.name[0:5] == "onet/"])
+                        [v for v in tf.compat.v1.global_variables()
+                         if v.name[0:5] == "onet/"])
 
-                    saver_pnet.restore(sess, file_paths[0])
+                    saver_pnet.restore(sess, file_paths[0] + 'pnet')
 
                     def pnet_fun(img): return sess.run(
                         out_tensor_pnet, feed_dict={image_pnet: img})
 
-                    saver_rnet.restore(sess, file_paths[1])
+                    saver_rnet.restore(sess, file_paths[1] + 'rnet')
 
                     def rnet_fun(img): return sess.run(
                         out_tensor_rnet, feed_dict={image_rnet: img})
 
-                    saver_onet.restore(sess, file_paths[2])
+                    saver_onet.restore(sess, file_paths[2] + 'onet')
 
                     def onet_fun(img): return sess.run(
                         out_tensor_onet, feed_dict={image_onet: img})

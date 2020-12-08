@@ -30,6 +30,7 @@ def train_Rnet(training_data, base_lr, loss_weight,
                train_mode, num_epochs,
                load_model=False, load_filename=None,
                save_model=False, save_filename=None,
+               save_final=True,
                num_iter_to_save=10000,
                device='/cpu:0', gpu_memory_fraction=1):
 
@@ -46,6 +47,7 @@ def train_Rnet(training_data, base_lr, loss_weight,
                       load_filename=load_filename,
                       save_model=save_model,
                       save_filename=save_filename,
+                      save_final=save_final,
                       num_iter_to_save=num_iter_to_save,
                       gpu_memory_fraction=gpu_memory_fraction)
 
@@ -64,8 +66,9 @@ if __name__ == '__main__':
                num_epochs=[300, None, None],
                load_model=False,
                load_filename=load_filename,
-               save_model=True,
+               save_model=False,
+               save_final=True,
                save_filename=save_filename,
                num_iter_to_save=50000,
                device=device,
-               gpu_memory_fraction=0.4)
+               gpu_memory_fraction=0.6)

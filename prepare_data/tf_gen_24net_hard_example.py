@@ -130,7 +130,7 @@ def main(args):
                             # Iou with all gts must below 0.3
                             save_file = os.path.join(neg_save_dir,
                                                      '%s.jpg' % n_idx)
-                            f2.write('%s/negative/%s' %
+                            f2.write('hard_%s/negative/%s' %
                                      (image_size, n_idx) + ' 0\n')
                             cv2.imwrite(save_file, resized_im)
                             n_idx += 1
@@ -149,7 +149,7 @@ def main(args):
                             if np.max(Iou) >= 0.65:
                                 save_file = os.path.join(pos_save_dir,
                                                          '%s.jpg' % p_idx)
-                                f1.write('%s/positive/%s' %
+                                f1.write('hard_%s/positive/%s' %
                                          (image_size, p_idx) +
                                          ' 1 %.2f %.2f %.2f %.2f\n' %
                                          (offset_x1, offset_y1,
@@ -160,7 +160,7 @@ def main(args):
                             elif np.max(Iou) >= 0.4:
                                 save_file = os.path.join(part_save_dir,
                                                          '%s.jpg' % d_idx)
-                                f3.write('%s/part/%s' % (image_size, d_idx) +
+                                f3.write('hard_%s/part/%s' % (image_size, d_idx) +
                                          ' -1 %.2f %.2f %.2f %.2f\n' %
                                          (offset_x1, offset_y1,
                                           offset_x2, offset_y2))
@@ -178,10 +178,10 @@ def parse_arguments(argv):
 
     parser.add_argument('--pnet_model', type=str,
                         help='The path of pnet model to generate hard example',
-                        default='../save_model/separate/pnet/pnet-3000000')
+                        default='../save_model/new_saver/pnet/pnet')
     parser.add_argument('--rnet_model', type=str,
                         help='The path of rnet model to generate hard example',
-                        default='../save_model/separate/rnet/rnet-3000000')
+                        default='../save_model/new_saver/rnet/rnet')
 
     return parser.parse_args(argv)
 

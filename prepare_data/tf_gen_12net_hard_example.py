@@ -169,7 +169,7 @@ def parse_arguments(argv):
 
     parser.add_argument('--pnet_model', type=str,
                         help='The path of pnet model to generate hard example',
-                        default='../save_model/new_saver/pnet/pnet-13600')
+                        default='../save_model/new_saver/pnet/pnet')
 
     return parser.parse_args(argv)
 

@@ -83,6 +83,7 @@ def get_meta_data(model_dir):
                          % model_dir)
     meta_file = meta_files[0]
     max_step = -1
+    data_file = ''
     for f in files:
         step_str = re.match(r'(^[A-Za-z]+-(\d+))', f)
         if step_str is not None and len(step_str.groups()) >= 2:

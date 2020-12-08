@@ -20,7 +20,7 @@
 
 - **Step3**. Run `python tf_gen_12net_hard_example.py` to generate hard sample. Run `python gen_shuffle_data.py 24` to generate random cropped training data. Then run `python gen_tfdata_24net.py` to combine these output and generate tfrecords file.
 
-- **Step4**. Similar to last step. Run `python gen_24net_hard_example.py` to generate hard sample. Run `python gen_shuffle_data.py 48` to generate random cropped training data. Then run `python gen_tfdata_48net.py ` to combine these output and generate tfrecords file.
+- **Step4**. Similar to last step. Run `python tf_gen_24net_hard_example.py` to generate hard sample. Run `python gen_shuffle_data.py 48` to generate random cropped training data. Then run `python gen_tfdata_48net.py ` to combine these output and generate tfrecords file.
 
 ### Training Example
 ***notice: You should be at `ROOT_DIR/` if you want to run the following command.***
